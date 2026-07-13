@@ -3098,7 +3098,181 @@ function guaImgWrapTextCentered(ctx, text, cx, y, maxWidth, lineHeight, draw) {
    句讀點靠右上，冒號括號旋轉九十度。
    整組水平居中；返回結束後的y。 */
 const V_PUNCT_SHIFT  = "。、，．";
-const V_PUNCT_ROTATE = "：；（）「」『』―—…‥";
+const V_PUNCT_ROTATE = "：；（）「」『』【】《》―—…‥";
+
+/* ── 橫排連續文字流（英文模式的方塊正文）──
+   與縱書流同構：標題【】嵌入行文（金色），內容連書，
+   兩端對齊（末行除外）形成整齊方塊；含橫排禁則。 */
+function guaImgHorizontalFlow(ctx, segments, x, topY, maxWidth, opts, draw) {
+  const size = opts.size || 15;
+  const lineH = opts.lineH || (size + 11);
+
+  /* 分詞：拉丁詞為不可斷token，CJK逐字，空格為彈性間隙 */
+  const tokens = [];
+  for (const seg of segments) {
+    const text = String(seg.text).replace(/\n/g, " ");
+    let i = 0;
+    while (i < text.length) {
+      const ch = text[i];
+      if (/[A-Za-z0-9]/.test(ch)) {
+        let j = i;
+        while (j < text.length && /[A-Za-z0-9''\u2019.,;:!?\-]/.test(text[j])) j++;
+        tokens.push({ t: text.slice(i, j), c: seg.color, latin: true });
+        i = j;
+      } else if (ch === " ") {
+        tokens.push({ t: " ", c: seg.color, space: true });
+        i++;
+      } else {
+        tokens.push({ t: ch, c: seg.color });
+        i++;
+      }
+    }
+  }
+
+  const H_HEAD_FORBIDDEN = "】」）》』。、，．：；!?,.;:）)";
+  const H_TAIL_FORBIDDEN = "【「（《『(";
+
+  ctx.save();
+  ctx.font = guaImgFont(size, 400);
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+
+  const wOf = tok => ctx.measureText(tok.t).width;
+
+  /* 貪心斷行 + 禁則 */
+  const lines = [];
+  let line = [], lineW = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    if (tok.space && line.length === 0) continue;   /* 行首不留空格 */
+    const tw = wOf(tok);
+    if (lineW + tw > maxWidth && line.length > 0) {
+      /* 行首禁則：若當前token是禁則字元，拉入本行（允許微溢出） */
+      if (!tok.space && tok.t.length === 1 && H_HEAD_FORBIDDEN.includes(tok.t)) {
+        line.push(tok); lineW += tw;
+        continue;
+      }
+      /* 行末禁則：行尾若是起始括號，推到下一行 */
+      let pushed = null;
+      while (line.length > 1 && !line[line.length-1].space &&
+             H_TAIL_FORBIDDEN.includes(line[line.length-1].t)) {
+        pushed = line.pop();
+      }
+      /* 去除行尾空格 */
+      while (line.length && line[line.length-1].space) line.pop();
+      lines.push(line);
+      line = pushed ? [pushed] : [];
+      lineW = pushed ? wOf(pushed) : 0;
+      if (!tok.space) { line.push(tok); lineW += tw; }
+    } else {
+      line.push(tok); lineW += tw;
+    }
+  }
+  while (line.length && line[line.length-1].space) line.pop();
+  if (line.length) lines.push(line);
+
+  /* 繪製：兩端對齊（末行左齊） */
+  let y = topY;
+  for (let li = 0; li < lines.length; li++) {
+    const ln = lines[li];
+    const natural = ln.reduce((s, tk) => s + wOf(tk), 0);
+    const isLast = li === lines.length - 1;
+    const gaps = ln.length - 1;
+    const extra = (!isLast && gaps > 0) ? Math.min((maxWidth - natural) / gaps, size * 0.6) : 0;
+    let xx = x;
+    for (const tk of ln) {
+      if (draw && !tk.space) {
+        ctx.fillStyle = tk.c;
+        ctx.fillText(tk.t, xx, y);
+      }
+      xx += wOf(tk) + extra;
+    }
+    y += lineH;
+  }
+  ctx.restore();
+  return y;
+}
+
+/* ── 連續縱書文字流（御神籤式正文）──
+   多段內容連書：標題以【】嵌入行文（金色），正文墨色，
+   直行右起連續分列，密排成一塊寬幅文字場。
+   列數自動適配可用寬度；返回結束後的y。 */
+function guaImgVerticalFlow(ctx, segments, cx, topY, opts, draw) {
+  const size   = opts.size   || 15;
+  const cell   = opts.cell   || (size + 7);
+  const colGap = opts.colGap || 13;
+  const availW = opts.availW || 600;
+
+  /* 展平為帶樣式的字元流 */
+  const stream = [];
+  for (const seg of segments) {
+    for (const ch of String(seg.text).replace(/\n/g, "")) {
+      stream.push({ ch, color: seg.color });
+    }
+  }
+  if (stream.length === 0) return topY;
+
+  const colW = size + colGap;
+  const maxCols = Math.max(1, Math.floor(availW / colW));
+  const perCol = Math.max(20, Math.ceil(stream.length / maxCols));
+
+  /* ── 禁則処理 ──
+     行末禁則：起始括號不得懸於列底 → 推入下一列（追い出し）
+     行首禁則：收尾括號與句讀點不得居於列頂 → 拉入本列，允許超出一格（追い込み／ぶら下がり） */
+  const OPENERS = "【「（《『〈［";
+  const HEAD_FORBIDDEN = "】」）》』〉］。、，．：；！？";
+  const cols = [];
+  let idx = 0;
+  while (idx < stream.length) {
+    let take = Math.min(perCol, stream.length - idx);
+    /* 行末禁則：列底若為起始括號則縮短本列 */
+    while (take > 1 && OPENERS.includes(stream[idx + take - 1].ch)) take--;
+    /* 行首禁則：下一列列頂若為禁則字元則拉入本列（最多追い込み兩格） */
+    let pulled = 0;
+    while (pulled < 2 && idx + take < stream.length && HEAD_FORBIDDEN.includes(stream[idx + take].ch)) {
+      take++; pulled++;
+    }
+    cols.push(stream.slice(idx, idx + take));
+    idx += take;
+  }
+
+  const nCols = cols.length;
+  const usedH = Math.max(...cols.map(c => c.length)) * cell;
+
+  const totalW = nCols * colW;
+  const rightX = cx + totalW / 2 - size / 2;
+
+  if (draw) {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.font = guaImgFont(size, 400);
+    for (let c = 0; c < nCols; c++) {
+      const colX = rightX - c * colW;
+      let yy = topY;
+      for (const item of cols[c]) {
+        ctx.fillStyle = item.color;
+        const ch = item.ch;
+        if (V_PUNCT_SHIFT.includes(ch)) {
+          ctx.fillText(ch, colX + size * 0.3, yy - size * 0.3);
+        } else if (V_PUNCT_ROTATE.includes(ch)) {
+          ctx.save();
+          ctx.translate(colX, yy + cell / 2);
+          ctx.rotate(Math.PI / 2);
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(ch, 0, 0);
+          ctx.restore();
+        } else {
+          ctx.fillText(ch, colX, yy);
+        }
+        yy += cell;
+      }
+    }
+    ctx.restore();
+  }
+  return topY + usedH;
+}
 
 function guaImgVerticalBlock(ctx, label, text, cx, topY, opts, draw) {
   const size    = opts.size    || 16;   /* 字號 */
@@ -3163,9 +3337,11 @@ function guaImgVerticalBlock(ctx, label, text, cx, topY, opts, draw) {
           ctx.fillText(ch, colX + size * 0.3, yy - size * 0.3);
         } else if (V_PUNCT_ROTATE.includes(ch)) {
           ctx.save();
-          ctx.translate(colX, yy + size / 2);
+          ctx.translate(colX, yy + cell / 2);
           ctx.rotate(Math.PI / 2);
-          ctx.fillText(ch, 0, -size / 2);
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(ch, 0, 0);
           ctx.restore();
         } else {
           ctx.fillText(ch, colX, yy);
@@ -3298,27 +3474,41 @@ async function generateGuaImage(mode) {
       y += 40;
 
       if (mode === "full") {
-        /* 卦辭 · 縱書 */
+        /* ── 御神籤式正文：全部經文連書成一塊寬幅文字場 ──
+           【標題】金色嵌入行文，正文墨色，直行右起連續分列 */
         guaImgDivider(draw ? ctx : measure, cx, draw ? y : 0, 220); y += 30;
-        y = guaImgVerticalBlock(ctx, labels.guaCi, base.guaCi, cx, y,
-              { size: 17, maxPer: 14 }, draw) + 30;
 
-        /* 動爻爻辭 · 縱書 */
-        y = guaImgVerticalBlock(ctx, labels.yaoCi, movingText, cx, y,
-              { size: 17, maxPer: 14 }, draw) + 30;
+        const G = GUAIMG.gold, I = GUAIMG.ink, M = GUAIMG.muted;
+        const segs = [
+          /* 本卦五篇 */
+          { text: `【${labels.guaCi}】`,  color: G }, { text: base.guaCi,  color: I },
+          { text: `【${labels.tuan}】`,   color: G }, { text: base.tuan,   color: I },
+          { text: `【${labels.xiang}】`,  color: G }, { text: base.xiang,  color: I },
+          { text: `【${labels.xuGua}】`,  color: G }, { text: base.xuGua,  color: I },
+          { text: `【${labels.zaGua}】`,  color: G }, { text: base.zaGua,  color: I },
+          /* 動爻 */
+          { text: `【${t("rec_moving")}・${r.movingLineName}】`, color: G },
+          { text: movingText, color: I },
+          { text: `【${labels.xiaoXiang}】`, color: G }, { text: movingXiaoXiang, color: M },
+          /* 變卦五篇 */
+          { text: `【${t("rec_changed")}・${changed.name}】`, color: G },
+          { text: `【${labels.guaCi}】`,  color: G }, { text: changed.guaCi,  color: I },
+          { text: `【${labels.tuan}】`,   color: G }, { text: changed.tuan,   color: I },
+          { text: `【${labels.xiang}】`,  color: G }, { text: changed.xiang,  color: I },
+          { text: `【${labels.xuGua}】`,  color: G }, { text: changed.xuGua,  color: I },
+          { text: `【${labels.zaGua}】`,  color: G }, { text: changed.zaGua,  color: I },
+        ];
 
-        /* 小象 · 縱書（略淡） */
-        y = guaImgVerticalBlock(ctx, labels.xiaoXiang, movingXiaoXiang, cx, y,
-              { size: 15, maxPer: 14, color: GUAIMG.muted }, draw) + 34;
+        y = (currentLang === "en")
+          ? guaImgHorizontalFlow(ctx, segs, PAD, y, CONTENT_W,
+              { size: 15 }, draw) + 30
+          : guaImgVerticalFlow(ctx, segs, cx, y,
+              { size: 15, colGap: 12, availW: CONTENT_W }, draw) + 34;
 
-        /* 變卦（小） */
+        /* 變卦小圖（文字場之後，作結） */
         guaImgDivider(draw ? ctx : measure, cx, draw ? y : 0, 220); y += 24;
-        ctx.textAlign = "center";
-        ctx.font = guaImgFont(13, 400);
-        ctx.fillStyle = GUAIMG.gold;
-        if (draw) ctx.fillText(t("rec_changed"), cx, y);
-        y += 26;
         y = guaImgDrawHex(draw ? ctx : { save(){},restore(){},fillRect(){},set fillStyle(v){},set shadowColor(v){},set shadowBlur(v){} }, r.changedLines, cx, y, 96, 6, 9, null) + 16;
+        ctx.textAlign = "center";
         ctx.font = guaImgFont(17, 400);
         ctx.fillStyle = GUAIMG.ink;
         if (draw) ctx.fillText(`${changed.name}`, cx, y);
@@ -3359,18 +3549,32 @@ async function generateGuaImage(mode) {
       if (draw) ctx.fillText(ct.ganzhi, cx, y);
       y += 44;
 
-      /* 落款印：朱色方印「兆」 */
-      const sealSize = 40;
+      /* 落款印：白文印（朱地陰刻）——實色朱面，「兆」以底色刻出 */
+      const sealSize = 46;
       if (draw) {
         ctx.save();
-        ctx.strokeStyle = GUAIMG.vermil;
-        ctx.lineWidth = 1.6;
-        ctx.strokeRect(cx - sealSize/2, y, sealSize, sealSize);
-        ctx.font = guaImgFont(24, 400);
+        const sx = cx - sealSize / 2;
+        const rr = 3;   /* 微圓角，仿石印邊緣 */
+        /* 印面 */
+        ctx.beginPath();
+        ctx.moveTo(sx + rr, y);
+        ctx.arcTo(sx + sealSize, y, sx + sealSize, y + sealSize, rr);
+        ctx.arcTo(sx + sealSize, y + sealSize, sx, y + sealSize, rr);
+        ctx.arcTo(sx, y + sealSize, sx, y, rr);
+        ctx.arcTo(sx, y, sx + sealSize, y, rr);
+        ctx.closePath();
         ctx.fillStyle = GUAIMG.vermil;
+        ctx.fill();
+        /* 邊緣微暗，增加鈐印的厚度感 */
+        ctx.strokeStyle = "rgba(0,0,0,.28)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        /* 陰刻「兆」：底色刻出，居中（+3%視覺補正，漢字重心略高） */
+        ctx.font = guaImgFont(30, 500);
+        ctx.fillStyle = GUAIMG.bg;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText("兆", cx, y + sealSize/2 + 1);
+        ctx.fillText("兆", cx, y + sealSize / 2 + sealSize * 0.03);
         ctx.restore();
       }
       y += sealSize + 48;
