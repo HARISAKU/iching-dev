@@ -1245,6 +1245,98 @@ body.lang-zh h2 {
   font-family: var(--f-serif-zh);
 }
 
+
+/* ── 蓍草演算（略筮法） ── */
+#yarrowOverlay{
+  display:none; position:fixed; inset:0; background:var(--bg); z-index:9999;
+  flex-direction:column; align-items:center;
+}
+.yarrow-inner{ width:100%; max-width:480px; height:100%; display:flex; flex-direction:column; }
+.yarrow-head{ padding:26px 30px 0; display:flex; align-items:baseline; gap:14px; }
+.yarrow-idx{ font-size:10px; letter-spacing:.4em; color:var(--soft); font-family:var(--f-sans); }
+.yarrow-name{ font-size:12px; letter-spacing:.3em; color:var(--muted); }
+.yarrow-rule{ margin-left:auto; font-size:10px; letter-spacing:.2em; color:var(--soft); font-family:var(--f-sans); }
+.yarrow-dots{ padding:14px 30px 0; display:flex; gap:7px; }
+.yarrow-dot{ width:5px; height:5px; border-radius:50%; border:1px solid var(--line); transition:background .4s, border-color .4s; }
+.yarrow-dot.done{ background:var(--ink); border-color:var(--ink); }
+.yarrow-dot.now{ background:var(--vermil); border-color:var(--vermil); }
+.yarrow-stage{ flex:1; position:relative; touch-action:none; cursor:crosshair; min-height:0; }
+.yarrow-stage svg{ width:100%; height:100%; display:block; overflow:visible; }
+.y-stalk{
+  stroke:var(--ink); stroke-width:1.6; stroke-linecap:round;
+  transition:opacity .45s ease, stroke .45s ease, transform .75s cubic-bezier(.22,.9,.24,1);
+  transform-box:fill-box; transform-origin:center;
+}
+.y-stalk.dim{opacity:.12}
+.y-stalk.rem{stroke:var(--vermil); stroke-width:2}
+.y-stalk.hang{stroke:var(--vermil); stroke-width:2.4; opacity:.95}
+.y-stalk.off{opacity:.06}
+.y-taikyoku{ stroke:var(--gold); stroke-width:2.4; stroke-linecap:round; opacity:0; transition:opacity 1.2s ease; }
+.y-taikyoku.on{opacity:.85}
+.y-tk-label{ fill:var(--gold); font-size:8px; letter-spacing:.3em; font-family:var(--f-sans); opacity:0; transition:opacity 1.2s ease .3s; }
+.y-tk-label.on{opacity:.6}
+.y-jin-label{ fill:var(--vermil); font-size:9px; letter-spacing:.3em; font-family:var(--f-sans); opacity:0; transition:opacity .8s ease .2s; }
+.y-jin-label.on{opacity:.75}
+.y-cut{ stroke:var(--vermil); stroke-width:1; opacity:0; transition:opacity .2s; }
+.y-cut.on{opacity:.65}
+.yarrow-tally{
+  position:absolute; left:0; right:0; bottom:0; display:flex; justify-content:space-between;
+  padding:0 30px; font-family:var(--f-sans); font-size:10px; letter-spacing:.22em;
+  color:var(--soft); opacity:0; transition:opacity .5s;
+}
+.yarrow-tally.on{opacity:1}
+.yarrow-tally b{ font-weight:400; color:var(--muted); }
+.yarrow-yield{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%) scale(.9);
+  text-align:center; opacity:0; pointer-events:none;
+  transition:opacity .8s ease, transform .8s cubic-bezier(.22,.9,.24,1);
+}
+.yarrow-yield.on{opacity:1; transform:translate(-50%,-50%) scale(1)}
+.yarrow-yield-tri{ font-size:56px; line-height:1; color:var(--ink); }
+.yarrow-yield-nm{ font-size:20px; letter-spacing:.3em; margin-top:14px; color:var(--ink); }
+.yarrow-yield-sub{ font-size:10px; letter-spacing:.3em; color:var(--soft); font-family:var(--f-sans); margin-top:10px; }
+.yarrow-say{
+  padding:0 30px 20px; text-align:center; min-height:64px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+}
+.yarrow-say-main{ font-size:14px; letter-spacing:.16em; color:var(--muted); line-height:2; }
+.yarrow-say-sub{ font-size:10px; letter-spacing:.24em; color:var(--soft); font-family:var(--f-sans); margin-top:6px; opacity:0; transition:opacity .4s; }
+.yarrow-say-sub.on{opacity:1}
+@keyframes yarrowPulse{0%,100%{opacity:.34}50%{opacity:.9}}
+.yarrow-beckon{animation:yarrowPulse 2.6s ease-in-out infinite}
+#yarrowViewBtn{ margin:0 auto 34px; opacity:0; pointer-events:none; transition:opacity .8s ease; }
+#yarrowViewBtn.on{ opacity:1; pointer-events:auto; }
+
+/* ── 卦影生成前の確認 ── */
+#guaImgConfirm{
+  display:none; position:fixed; inset:0; background:rgba(13,11,8,.88);
+  z-index:10000; align-items:center; justify-content:center; padding:24px;
+}
+.gic-box{
+  width:100%; max-width:400px; background:var(--card);
+  border:1px solid var(--line); padding:30px 26px 22px;
+}
+.gic-title{ font-size:15px; letter-spacing:.12em; color:var(--ink); line-height:1.9; }
+.gic-hint{ font-size:12px; letter-spacing:.04em; color:var(--soft); line-height:1.9; margin-top:8px; }
+.gic-quote{
+  border-left:2px solid var(--vermil); padding:10px 14px; margin:16px 0 18px;
+  color:var(--muted); font-size:13.5px; line-height:1.9;
+  max-height:150px; overflow:auto; white-space:pre-wrap;
+}
+.gic-opt{
+  display:flex; align-items:center; gap:10px; padding:9px 0; cursor:pointer;
+  color:var(--soft); font-size:13.5px; letter-spacing:.06em; user-select:none;
+}
+.gic-opt .gic-mark{
+  width:14px; height:14px; border:1px solid var(--line); border-radius:50%;
+  display:inline-block; position:relative; flex:none; transition:border-color .25s;
+}
+.gic-opt.sel{ color:var(--ink); }
+.gic-opt.sel .gic-mark{ border-color:var(--vermil); }
+.gic-opt.sel .gic-mark::after{
+  content:""; position:absolute; inset:3px; border-radius:50%; background:var(--vermil);
+}
+
 </style>
 </head>
 
@@ -1499,7 +1591,7 @@ body.lang-zh h2 {
   </div>
 
   <button onclick="showStep(6)" data-i18n="cast_dice_btn">サイコロを使いました</button>
-  <button class="secondary" onclick="randomCast()" data-i18n="cast_random_btn">この瞬間に委ねる</button>
+  <button class="secondary" onclick="startYarrow()" data-i18n="cast_random_btn">サイコロがなくても — 蓍草で演算する</button>
 </section>
 
 <section class="step" id="step-6">
@@ -1575,8 +1667,7 @@ body.lang-zh h2 {
     <div class="text-block" id="changedTexts"></div>
   </details>
 
-  <button onclick="generateGuaImage('minimal')" data-i18n="img_btn_min">卦影を保存（簡）</button>
-  <button onclick="generateGuaImage('full')" data-i18n="img_btn_full">卦影を保存（全）</button>
+  <button onclick="requestGuaImage()" data-i18n="img_btn">卦影を生成</button>
 
   <button onclick="copyRecord()" data-i18n="result_copy_btn">この記録をコピー</button>
   
@@ -1636,6 +1727,61 @@ line-height:1.9;
 </div>
 
 <div class="toast" id="toast" data-i18n="toast_copied">コピーしました</div>
+
+<div id="yarrowOverlay">
+  <div class="yarrow-inner">
+    <div class="yarrow-head">
+      <span class="yarrow-idx" id="yPhaseIdx"></span>
+      <span class="yarrow-name" id="yPhaseName"></span>
+      <span class="yarrow-rule" id="yPhaseRule"></span>
+    </div>
+    <div class="yarrow-dots">
+      <div class="yarrow-dot" id="yd0"></div>
+      <div class="yarrow-dot" id="yd1"></div>
+      <div class="yarrow-dot" id="yd2"></div>
+    </div>
+    <div class="yarrow-stage" id="yarrowStage">
+      <svg id="yarrowSvg" viewBox="0 0 400 340" preserveAspectRatio="xMidYMid meet">
+        <g id="yTaikyokuG"></g>
+        <g id="yBundleG"></g>
+        <g id="yJinG"></g>
+        <line id="yCut" class="y-cut" x1="0" y1="46" x2="0" y2="300"/>
+      </svg>
+      <div class="yarrow-tally" id="yarrowTally">
+        <span><span data-i18n="yr_tian">天</span> <b id="yTallyL">—</b></span>
+        <span><span data-i18n="yr_jin">人</span> <b id="yTallyH">—</b></span>
+        <span><span data-i18n="yr_di">地</span> <b id="yTallyR">—</b></span>
+      </div>
+      <div class="yarrow-yield" id="yarrowYield">
+        <div class="yarrow-yield-tri" id="yYieldTri"></div>
+        <div class="yarrow-yield-nm" id="yYieldNm"></div>
+        <div class="yarrow-yield-sub" id="yYieldSub"></div>
+      </div>
+    </div>
+    <div class="yarrow-say">
+      <div class="yarrow-say-main" id="yarrowSayMain"></div>
+      <div class="yarrow-say-sub" id="yarrowSaySub" data-i18n="yr_say_finger">指でなぞる</div>
+    </div>
+    <button id="yarrowViewBtn" onclick="yarrowView()" data-i18n="yr_view_btn">卦象を見る</button>
+  </div>
+</div>
+
+<div id="guaImgConfirm">
+  <div class="gic-box">
+    <div class="gic-title" data-i18n="img_confirm_title">あなたの言葉を、卦影に残しますか</div>
+    <div class="gic-hint" data-i18n="img_confirm_hint">この卦に語った以下の言葉を、卦影に含めるか選べます。既定では含めません。</div>
+    <div class="gic-quote" id="gicQuote"></div>
+    <div class="gic-opt sel" id="gicOptNo" onclick="gicChoose(false)">
+      <span class="gic-mark"></span><span data-i18n="img_opt_exclude">含めない（既定）</span>
+    </div>
+    <div class="gic-opt" id="gicOptYes" onclick="gicChoose(true)">
+      <span class="gic-mark"></span><span data-i18n="img_opt_include">含める</span>
+    </div>
+    <button onclick="gicGo()" data-i18n="img_confirm_go">卦影を生成</button>
+    <button class="secondary" onclick="gicCancel()" data-i18n="img_confirm_back">戻る</button>
+  </div>
+</div>
+
 
 <script>
 const BAGUA = {
@@ -3448,7 +3594,8 @@ function guaImgDivider(ctx, cx, y, w) {
 }
 
 /* 主生成函數 */
-async function generateGuaImage(mode) {
+async function generateGuaImage(includeUserText) {
+  const mode = "full";
   if (!lastGua) return toast(t("toast_no_record"));
   toast(t("img_generating"));
 
@@ -3557,7 +3704,7 @@ async function generateGuaImage(mode) {
       }
 
       /* 所問（用戶現代文字，橫排居中） */
-      const concernShow = concern
+      const concernShow = (includeUserText && concern)
         ? concern
         : `${selectedIntent}｜${selectedCategory}`;
       guaImgDivider(draw ? ctx : measure, cx, draw ? y : 0, 220); y += 26;
@@ -3839,11 +3986,11 @@ const LANG_DATA = {
   /* ── Step 5: Cast method ── */
   cast_eyebrow:       { ja: "起卦",               zh: "起卦", en: "Cast" },
   cast_p1:            { ja: "起卦の方法を選んでください", zh: "選擇起卦方式", en: "Choose how to cast the hexagram" },
-  cast_p2:            { ja: "手元のサイコロを使うか、この瞬間に委ねるか。", zh: "你可以藉助手中的實體骰子，也可以直接交給此刻。", en: "Use the dice in your hand, or surrender to this moment." },
+  cast_p2:            { ja: "手元のサイコロを使うか、蓍草の演算に委ねるか。", zh: "你可以藉助手中的實體骰子，也可以交給蓍草演算。", en: "Use the dice in your hand, or cast with yarrow stalks." },
   cast_notice:        { ja: "黒い八面体サイコロで上卦を決めます。<br>赤い八面体サイコロで下卦を決めます。<br>六面体サイコロで動爻を決めます。",
                         zh: "黑色八面骰決定上卦。<br>紅色八面骰決定下卦。<br>六面骰決定動爻。", en: "The black octahedral die determines the upper trigram.<br>The red octahedral die determines the lower trigram.<br>The six-sided die determines the moving line." },
   cast_dice_btn:      { ja: "サイコロを使いました",  zh: "我已使用實體骰子", en: "I have rolled the dice" },
-  cast_random_btn:    { ja: "この瞬間に委ねる",      zh: "交給此刻", en: "Surrender to this moment" },
+  cast_random_btn:    { ja: "サイコロがなくても — 蓍草で演算する", zh: "還沒有實體骰子？以蓍草演算", en: "No dice? Cast with yarrow stalks" },
 
   /* ── Step 6: Dice input ── */
   dice_eyebrow:       { ja: "入力",               zh: "輸入", en: "Input" },
@@ -3873,8 +4020,13 @@ const LANG_DATA = {
   result_moving_summary:{ ja: "動爻の爻辞と小象", zh: "動爻爻辭與小象", en: "Moving line text & Small Image" },
   result_changed_summary:{ ja: "変卦の経文",       zh: "變卦經文", en: "Changed Hexagram text" },
   result_copy_btn:    { ja: "この記録をコピー",    zh: "複製此刻記錄", en: "Copy this record" },
-  img_btn_min:        { ja: "卦影を保存（簡）",    zh: "生成卦影（極簡）", en: "Save Image (Minimal)" },
-  img_btn_full:       { ja: "卦影を保存（全）",    zh: "生成卦影（完整）", en: "Save Image (Full)" },
+  img_btn:            { ja: "卦影を生成",           zh: "生成卦影", en: "Create the image" },
+  img_confirm_title:  { ja: "あなたの言葉を、卦影に残しますか", zh: "要將你寫下的話留在卦影中嗎", en: "Include your words in the image?" },
+  img_confirm_hint:   { ja: "この卦に語った以下の言葉を、卦影に含めるか選べます。既定では含めません。", zh: "你對這一卦說過的以下內容，可選擇是否顯示在卦影中。預設不顯示。", en: "You may choose whether the words below appear in the image. By default they do not." },
+  img_opt_exclude:    { ja: "含めない（既定）",     zh: "不顯示（預設）", en: "Do not include (default)" },
+  img_opt_include:    { ja: "含める",               zh: "顯示原文", en: "Include" },
+  img_confirm_go:     { ja: "卦影を生成",           zh: "生成卦影", en: "Generate" },
+  img_confirm_back:   { ja: "戻る",                 zh: "返回", en: "Back" },
   img_generating:     { ja: "卦影を生成中…",      zh: "卦影生成中…", en: "Generating…" },
   img_saved:          { ja: "卦影を保存しました",  zh: "卦影已生成", en: "Image saved" },
   img_fail:           { ja: "生成に失敗しました",  zh: "生成失敗，請重試", en: "Failed to generate" },
@@ -3882,6 +4034,35 @@ const LANG_DATA = {
   img_time_label:     { ja: "占時",               zh: "占時", en: "Cast at" },
   result_next:        { ja: "次のステップ：<br>コピーした内容を AI に送ってください。<br>卦象の解釈は、そこで続きます。",
                         zh: "下一步：<br>請將複製的內容發送給 AI。<br>卦象的解釋，會在那裡繼續展開。", en: "Next step:<br>Send the copied record to your AI.<br>The interpretation continues there." },
+
+  /* ── Yarrow 蓍草演算（略筮法） ── */
+  yr_idx_intro:  { ja: "大 衍",   zh: "大 衍",   en: "OPENING" },
+  yr_idx_1:      { ja: "一 変",   zh: "一 變",   en: "FIRST" },
+  yr_idx_2:      { ja: "二 変",   zh: "二 變",   en: "SECOND" },
+  yr_idx_3:      { ja: "三 変",   zh: "三 變",   en: "THIRD" },
+  yr_fifty:      { ja: "五十",     zh: "五十",     en: "Fifty" },
+  yr_fortynine:  { ja: "四十九",   zh: "四十九",   en: "Forty-nine" },
+  yr_inner:      { ja: "内卦",     zh: "內卦",     en: "Inner Trigram" },
+  yr_outer:      { ja: "外卦",     zh: "外卦",     en: "Outer Trigram" },
+  yr_moving2:    { ja: "動爻",     zh: "動爻",     en: "Moving Line" },
+  yr_rule8:      { ja: "八を以て揲す", zh: "以八揲之", en: "Count by eights" },
+  yr_rule6:      { ja: "六を以て揲す", zh: "以六揲之", en: "Count by sixes" },
+  yr_say_50:     { ja: "大衍の數、五十", zh: "大衍之數五十", en: "The great number: fifty" },
+  yr_say_49:     { ja: "其の用は、四十有九", zh: "其用四十有九", en: "Of these, forty-nine are used" },
+  yr_say_taiji:  { ja: "一を措く — 動かざるもの", zh: "置一不用 — 是為太極", en: "One is set aside — the unmoving" },
+  yr_say_divide: { ja: "蓍を、二つに分ける", zh: "將蓍草一分為二", en: "Divide the stalks in two" },
+  yr_say_finger: { ja: "指でなぞる",   zh: "以指劃過", en: "Trace across with your finger" },
+  yr_say_release:{ ja: "離す",         zh: "放開",     en: "Release" },
+  yr_say_mid:    { ja: "もう少し中ほどで", zh: "請再靠中間一些", en: "A little closer to the middle" },
+  yr_say_two:    { ja: "天と地に、分かつ", zh: "分為天地", en: "Heaven and earth divide" },
+  yr_say_hang:   { ja: "地策より、一を挂ける", zh: "自地策掛一", en: "One is hung from the earth" },
+  yr_say_rem:    { ja: "餘り、",       zh: "餘",       en: "Remainder: " },
+  yr_say_done:   { ja: "卦、定まる",   zh: "卦已定",   en: "The hexagram is cast" },
+  yr_view_btn:   { ja: "卦象を見る",   zh: "查看卦象", en: "View the hexagram" },
+  yr_tian:       { ja: "天",           zh: "天",       en: "Heaven" },
+  yr_jin:        { ja: "人",           zh: "人",       en: "Man" },
+  yr_di:         { ja: "地",           zh: "地",       en: "Earth" },
+  yr_taiji_label:{ ja: "太極",         zh: "太極",     en: "TAIJI" },
 
   /* ── Dynamic texts ── */
   moving_card_label:  { ja: "動爻",               zh: "動爻", en: "Moving Line" },
@@ -4910,6 +5091,331 @@ setLang(currentLang);
   };
 
 })();
+
+
+/* ═══════════════════════════════════════════
+   蓍草演算（略筮法・三変筮法）
+   一変 → 内卦（八を以て揲す）
+   二変 → 外卦（八を以て揲す）
+   三変 → 動爻（六を以て揲す）
+   ═══════════════════════════════════════════ */
+const YARROW_TRI = ['乾','兌','離','震','巽','坎','艮','坤'];
+const YARROW_GLYPH = {乾:'☰',兌:'☱',離:'☲',震:'☳',巽:'☴',坎:'☵',艮:'☶',坤:'☷'};
+const YARROW_NUM = ['','一','二','三','四','五','六','七','八'];
+const YARROW_YAO = ['','初','二','三','四','五','上'];
+const Y_VB = { W:400, H:340, L:52, R:348, TOP:46, BOT:300 };
+
+let yPhase = 0, yResults = [], yStalks = [];
+let yLocked = true, yDragging = false, yBound = false;
+
+function yEl(id){ return document.getElementById(id); }
+function yNum(n){ return currentLang === 'en' ? String(n) : YARROW_NUM[n]; }
+function yPhases(){
+  return [
+    { idx:t('yr_idx_1'), name:t('yr_inner'),   rule:t('yr_rule8'), mod:8 },
+    { idx:t('yr_idx_2'), name:t('yr_outer'),   rule:t('yr_rule8'), mod:8 },
+    { idx:t('yr_idx_3'), name:t('yr_moving2'), rule:t('yr_rule6'), mod:6 }
+  ];
+}
+
+/* 束ねる：等間隔ではなく乱れた実物の束。数えられないことが要 */
+function yBundle(n){
+  n = n || 49;
+  yEl('yBundleG').innerHTML = '';
+  yEl('yJinG').innerHTML = '';
+  yStalks = [];
+  const span = Y_VB.R - Y_VB.L;
+  const gap = span / (n - 1);
+  for (let i = 0; i < n; i++){
+    const jitter = (Math.random() - 0.5) * gap * 1.5;
+    const x = Y_VB.L + i * gap + jitter;
+    const tilt = (Math.random() - 0.5) * 7;
+    const shrink = Math.random() * 46;
+    const drop = Math.random() * 16;
+    const y1 = Y_VB.TOP + drop + shrink * 0.5;
+    const y2 = Y_VB.BOT - drop - shrink * 0.5;
+    const dx = Math.tan(tilt * Math.PI / 180) * (y2 - y1) / 2;
+    const el = document.createElementNS('http://www.w3.org/2000/svg','line');
+    el.setAttribute('class','y-stalk');
+    el.setAttribute('x1', x - dx); el.setAttribute('y1', y1);
+    el.setAttribute('x2', x + dx); el.setAttribute('y2', y2);
+    el.style.opacity = 0;
+    yEl('yBundleG').appendChild(el);
+    yStalks.push({ el, x });
+    setTimeout(() => { el.style.opacity = 1; }, 14 * i);
+  }
+  yStalks.sort((a,b) => a.x - b.x);
+}
+
+/* 太極：五十のうち用いざる一。終始動かない */
+function yRaiseTaikyoku(){
+  const g = yEl('yTaikyokuG');
+  g.innerHTML = '';
+  const el = document.createElementNS('http://www.w3.org/2000/svg','line');
+  el.setAttribute('class','y-taikyoku');
+  el.setAttribute('x1', 18); el.setAttribute('y1', 62);
+  el.setAttribute('x2', 18); el.setAttribute('y2', 288);
+  g.appendChild(el);
+  const tx = document.createElementNS('http://www.w3.org/2000/svg','text');
+  tx.setAttribute('class','y-tk-label');
+  tx.setAttribute('x', 18); tx.setAttribute('y', 306);
+  tx.setAttribute('text-anchor','middle');
+  tx.textContent = t('yr_taiji_label');
+  g.appendChild(tx);
+  requestAnimationFrame(() => { el.classList.add('on'); tx.classList.add('on'); });
+}
+
+/* 人：挂一の名 */
+function yMarkJin(){
+  const g = yEl('yJinG');
+  g.innerHTML = '';
+  const tx = document.createElementNS('http://www.w3.org/2000/svg','text');
+  tx.setAttribute('class','y-jin-label');
+  tx.setAttribute('x', 276); tx.setAttribute('y', 30);
+  tx.setAttribute('text-anchor','start');
+  tx.textContent = t('yr_jin');
+  g.appendChild(tx);
+  requestAnimationFrame(() => tx.classList.add('on'));
+}
+
+/* 画面座標 → SVG座標（meet縮放を考慮） */
+function yToSvgX(clientX){
+  const r = yEl('yarrowSvg').getBoundingClientRect();
+  const scale = Math.min(r.width / Y_VB.W, r.height / Y_VB.H);
+  const offX = (r.width - Y_VB.W * scale) / 2;
+  return (clientX - r.left - offX) / scale;
+}
+
+function ySetSay(txt, beckon){
+  const m = yEl('yarrowSayMain');
+  m.textContent = txt;
+  m.classList.toggle('yarrow-beckon', !!beckon);
+}
+
+/* 序：五十より一を措く */
+function yIntro(){
+  yEl('yPhaseIdx').textContent = t('yr_idx_intro');
+  yEl('yPhaseName').textContent = t('yr_fifty');
+  yEl('yPhaseRule').textContent = '';
+  yEl('yarrowSaySub').classList.remove('on');
+  ySetSay(t('yr_say_50'), false);
+  yBundle(50);
+  setTimeout(() => {
+    const k = yStalks[24];
+    k.el.style.transform = 'translate(-150px,-24px) rotate(-6deg)';
+    k.el.style.opacity = 0;
+    ySetSay(t('yr_say_49'), false);
+  }, 1500);
+  setTimeout(() => {
+    yRaiseTaikyoku();
+    yEl('yPhaseName').textContent = t('yr_fortynine');
+    ySetSay(t('yr_say_taiji'), false);
+  }, 2500);
+  setTimeout(() => { yPhase = 0; yNextPhase(); }, 4200);
+}
+
+function yNextPhase(){
+  const p = yPhases()[yPhase];
+  yEl('yPhaseIdx').textContent = p.idx;
+  yEl('yPhaseName').textContent = p.name;
+  yEl('yPhaseRule').textContent = p.rule;
+  for (let i = 0; i < 3; i++){
+    yEl('yd' + i).className = 'yarrow-dot' + (i < yPhase ? ' done' : i === yPhase ? ' now' : '');
+  }
+  yBundle(49);
+  ySetSay(t('yr_say_divide'), true);
+  yEl('yarrowSaySub').classList.add('on');
+  yLocked = false;
+}
+
+/* 分二 → 挂一 → 揲 → 帰奇 */
+function yDivide(cutX){
+  yLocked = true;
+  const left  = yStalks.filter(s => s.x <  cutX);
+  const right = yStalks.filter(s => s.x >= cutX);
+
+  if (left.length < 4 || right.length < 2){
+    ySetSay(t('yr_say_mid'), true);
+    yLocked = false;
+    return;
+  }
+
+  left.forEach(s  => s.el.style.transform = 'translateX(-26px)');
+  right.forEach(s => s.el.style.transform = 'translateX(26px)');
+
+  const hang = right[right.length - 1];
+  const cnt = left.length;
+
+  ySetSay(t('yr_say_two'), false);
+  yEl('yTallyL').textContent = cnt;
+  yEl('yTallyR').textContent = right.length;
+  yEl('yTallyH').textContent = '—';
+  yEl('yarrowTally').classList.add('on');
+
+  /* 挂一：天地の間へ、横たえて */
+  setTimeout(() => {
+    hang.el.classList.add('hang');
+    const hy1 = parseFloat(hang.el.getAttribute('y1'));
+    const hy2 = parseFloat(hang.el.getAttribute('y2'));
+    const hcy = (hy1 + hy2) / 2;
+    hang.el.style.transform =
+      'translate(' + (200 - hang.x) + 'px,' + (26 - hcy) + 'px) rotate(90deg) scale(.5)';
+    yMarkJin();
+    yEl('yTallyH').textContent = 1;
+    yEl('yTallyR').textContent = right.length - 1;
+    ySetSay(t('yr_say_hang'), false);
+  }, 820);
+
+  /* 地策を退ける — 揲すのは天策 */
+  setTimeout(() => {
+    right.forEach(s => { if (s !== hang) s.el.classList.add('off'); });
+    ySetSay(yPhases()[yPhase].rule, false);
+  }, 1560);
+
+  /* 揲：束ごとに除く */
+  const mod = yPhases()[yPhase].mod;
+  const groups = Math.floor((cnt - 1) / mod);
+  let tAt = 2260;
+  for (let g = 0; g < groups; g++){
+    setTimeout(((gg) => () => {
+      left.slice(gg * mod, (gg + 1) * mod).forEach(s => s.el.classList.add('dim'));
+    })(g), tAt);
+    tAt += 380;
+  }
+
+  /* 帰奇：余りが卦を成す */
+  const rem = ((cnt - 1) % mod) + 1;
+  setTimeout(() => {
+    left.slice(groups * mod).forEach(s => s.el.classList.add('rem'));
+    ySetSay(t('yr_say_rem') + yNum(rem), false);
+  }, tAt + 240);
+
+  setTimeout(() => yReveal(rem), tAt + 1180);
+}
+
+/* 結実 */
+function yReveal(rem){
+  yResults.push(rem);
+  if (yPhase < 2){
+    const tri = YARROW_TRI[rem - 1];
+    yEl('yYieldTri').textContent = YARROW_GLYPH[tri];
+    yEl('yYieldNm').textContent = tri;
+    yEl('yYieldSub').textContent = (currentLang === 'en' ? 'Remainder ' + rem : '餘 ' + YARROW_NUM[rem]);
+  } else {
+    yEl('yYieldTri').textContent = '爻';
+    yEl('yYieldNm').textContent = (currentLang === 'en' ? 'Line ' + rem : YARROW_YAO[rem] + ' 爻');
+    yEl('yYieldSub').textContent = (currentLang === 'en' ? 'Remainder ' + rem : '餘 ' + YARROW_NUM[rem]);
+  }
+  yStalks.forEach(s => s.el.style.opacity = 0.05);
+  yEl('yarrowTally').classList.remove('on');
+  yEl('yarrowSayMain').style.opacity = 0;
+  yEl('yarrowSaySub').classList.remove('on');
+  yEl('yarrowYield').classList.add('on');
+
+  setTimeout(() => {
+    yEl('yarrowYield').classList.remove('on');
+    setTimeout(() => {
+      yEl('yarrowSayMain').style.opacity = 1;
+      yPhase++;
+      if (yPhase < 3){ yNextPhase(); } else { yFinish(); }
+    }, 700);
+  }, 2100);
+}
+
+/* 成卦：査看卦象ボタンを出す */
+function yFinish(){
+  for (let i = 0; i < 3; i++) yEl('yd' + i).className = 'yarrow-dot done';
+  ySetSay(t('yr_say_done'), false);
+  yEl('yarrowViewBtn').classList.add('on');
+}
+
+/* 卦象へ：サイコロ起卦と同一の過渡動画（六爻線アニメは使わない） */
+function yarrowView(){
+  const gua = generateGua({
+    upper: YARROW_TRI[yResults[1] - 1],
+    lower: YARROW_TRI[yResults[0] - 1],
+    movingLine: yResults[2]
+  });
+  yEl('yarrowOverlay').style.display = 'none';
+  playGuaTransition(() => renderResult(gua));
+}
+
+function yOnDown(e){
+  if (yLocked) return;
+  yDragging = true;
+  yEl('yarrowSayMain').classList.remove('yarrow-beckon');
+  yOnMoveCut(e);
+}
+function yOnMove(e){
+  if (!yDragging || yLocked) return;
+  e.preventDefault();
+  yOnMoveCut(e);
+}
+function yOnMoveCut(e){
+  const cx = (e.touches ? e.touches[0].clientX : e.clientX);
+  let x = yToSvgX(cx);
+  x = Math.max(Y_VB.L - 14, Math.min(Y_VB.R + 14, x));
+  const cut = yEl('yCut');
+  cut.setAttribute('x1', x); cut.setAttribute('x2', x);
+  cut.classList.add('on');
+  yEl('yarrowSaySub').classList.remove('on');
+  ySetSay(t('yr_say_release'), false);
+}
+function yOnUp(){
+  if (!yDragging || yLocked) return;
+  yDragging = false;
+  const x = parseFloat(yEl('yCut').getAttribute('x1'));
+  yEl('yCut').classList.remove('on');
+  yDivide(x);
+}
+
+function startYarrow(){
+  const ov = yEl('yarrowOverlay');
+  if (!ov) return;
+  yPhase = 0; yResults = []; yLocked = true; yDragging = false;
+  yEl('yTaikyokuG').innerHTML = '';
+  yEl('yBundleG').innerHTML = '';
+  yEl('yJinG').innerHTML = '';
+  yEl('yarrowYield').classList.remove('on');
+  yEl('yarrowTally').classList.remove('on');
+  yEl('yarrowViewBtn').classList.remove('on');
+  yEl('yarrowSayMain').style.opacity = 1;
+  for (let i = 0; i < 3; i++) yEl('yd' + i).className = 'yarrow-dot' + (i === 0 ? ' now' : '');
+  if (!yBound){
+    const st = yEl('yarrowStage');
+    st.addEventListener('mousedown', yOnDown);
+    st.addEventListener('mousemove', yOnMove);
+    window.addEventListener('mouseup', yOnUp);
+    st.addEventListener('touchstart', yOnDown, { passive:false });
+    st.addEventListener('touchmove', yOnMove, { passive:false });
+    window.addEventListener('touchend', yOnUp);
+    yBound = true;
+  }
+  ov.style.display = 'flex';
+  yIntro();
+}
+
+/* ═══════════ 卦影生成前の確認 ═══════════ */
+let gicInclude = false;
+
+function requestGuaImage(){
+  if (!lastGua) return toast(t('toast_no_record'));
+  if (!concern){ generateGuaImage(false); return; }
+  gicInclude = false;
+  document.getElementById('gicQuote').innerText = concern;
+  gicSync();
+  document.getElementById('guaImgConfirm').style.display = 'flex';
+}
+function gicChoose(inc){ gicInclude = inc; gicSync(); }
+function gicSync(){
+  document.getElementById('gicOptNo').classList.toggle('sel', !gicInclude);
+  document.getElementById('gicOptYes').classList.toggle('sel', gicInclude);
+}
+function gicCancel(){ document.getElementById('guaImgConfirm').style.display = 'none'; }
+function gicGo(){
+  document.getElementById('guaImgConfirm').style.display = 'none';
+  generateGuaImage(gicInclude);
+}
 
 </script>
 </body>
